@@ -12,9 +12,9 @@ LIBS=-lssl
 
 # Les fichiers sources de l'application
 
-COMMON=protocol.c raw.c udp.c config.c rsa.c timeout.c   packet.c database.c common.c pidfile.c signalpipe.c 
-SERVER=sdhcpd.c 
-CLIENT=sdhcp.c 
+COMMON=src/protocol.c src/raw.c src/udp.c src/config.c src/rsa.c src/timeout.c   src/packet.c src/database.c src/common.c src/pidfile.c src/signalpipe.c
+SERVER=src/svdhcpd.c
+CLIENT=src/svdhcp.c
 #ENTETES=sdhcp.h packet.h
 
 
@@ -22,12 +22,12 @@ CLIENT=sdhcp.c
 # CIBLES #
 ##########
 
-all: server client 
+all: server client
 
-server: $(SERVER:.c=.o) $(COMMON:.c=.o) 
+server: $(SERVER:.c=.o) $(COMMON:.c=.o)
 	$(CC) -o sdhcpd $(SERVER:.c=.o) $(COMMON:.c=.o) $(LIBS)
 
-client: $(CLIENT:.c=.o) $(COMMON:.c=.o) 
+client: $(CLIENT:.c=.o) $(COMMON:.c=.o)
 	$(CC) -o sdhcp $(CLIENT:.c=.o) $(COMMON:.c=.o) $(LIBS)
 
 .c.o:

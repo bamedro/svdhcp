@@ -1,9 +1,11 @@
 
-#include "sdhcp.h"
+#include "svdhcp.h"
 #include "packet.h"
 #include "protocol.h"
 #include "rsa.h"
 #include "common.h"
+
+#include <strings.h>
 
 /* Super function thanks to patrice laidet*/
 int inet_mtos (char * mac_string, char * mac_char)
@@ -17,7 +19,7 @@ int inet_mtos (char * mac_string, char * mac_char)
 int broadcast_sDHCP (struct client_t * client, struct server_t * server)
 {
 	struct packet_t packet;
-	
+
     char * tmp_buffer;
 
     printf( "Recherche du serveur SDHCP...\n" );
@@ -25,13 +27,13 @@ int broadcast_sDHCP (struct client_t * client, struct server_t * server)
     bzero( packet.data, BUFFER_SIZE );
 
     // Packet type 1
-    packet_init( packet.data, PACKET_1, 0, 0 );
-    
+    packet_init( &packet, PACKET_1, 0, 0 );
+
     // KC->N
     tmp_buffer = BN_bn2hex(client->rsa->n );
     packet_add( packet.data, PACKET_OPT_RSA_N, strlen(tmp_buffer), tmp_buffer );
     free(tmp_buffer);
-    
+
     // KC->E
     tmp_buffer = BN_bn2hex( client->rsa->e );
     packet_add( packet.data, PACKET_OPT_RSA_E, strlen(tmp_buffer), tmp_buffer );
@@ -145,7 +147,7 @@ int send_packet_2 (struct client_t * client, struct server_t * server)
 }
 // Etape 2
 //
-// Récéption : Ks, pair(Kc(n))
+// Rï¿½cï¿½ption : Ks, pair(Kc(n))
 //
 */
 int new_server ( struct client_t * client, struct server_t * server, struct packet_t packet)
@@ -154,8 +156,8 @@ int new_server ( struct client_t * client, struct server_t * server, struct pack
 	char optdata[BUFFER_SIZE];
 	char buffer_in_odd[BUFFER_SIZE];
 	int optlen;
-	
-	
+
+
     server->xid = packet_id(packet->data, packet->sz);
     printf("Id server: %d\n",server->xid);
     server->rsa = RSA_new();
@@ -188,7 +190,7 @@ int send_packet_3 (struct client_t * client, struct server_t * server)
             rsa_s,
             RSA_PADDING );
 
-    // On découpe le paquet crypté en 2 : bits pairs et impairs
+    // On dï¿½coupe le paquet cryptï¿½ en 2 : bits pairs et impairs
     buffer_out_sz = packet_odd( crypt_buf, buffer_out_odd, sz );
     packet_add( buffer, 1, buffer_out_sz, buffer_out_odd );
     buffer_out_sz = packet_even( crypt_buf, buffer_out_even, sz );
@@ -258,7 +260,7 @@ int send_packet_4 (struct client_t * client, struct server_t * server)
 
 // Etape 4
 //
-// Récéption : impair(Kc(n))
+// Rï¿½cï¿½ption : impair(Kc(n))
 //
 int rcv_packet_4 ( struct client_t * client, struct server_t * server, char * buffer, int sz )
 {
@@ -402,7 +404,7 @@ int send_packet_6 (struct client_t * client, struct server_t * server)
 }
 // Etape 6
 
-// Récéption : Kc(m)
+// Rï¿½cï¿½ption : Kc(m)
 //
 int rcv_packet_6 ( struct client_t * client, struct server_t * server, char * buffer, int sz )
 {
@@ -418,7 +420,7 @@ int rcv_packet_6 ( struct client_t * client, struct server_t * server, char * bu
             RSA_PADDING );
 
     if( atol(crypt_buf) != sec_m ) {
-        fprintf( stderr, "/!\\ \t Laison non sûre, probablement une attaque 'passeur de seau' !!!\n" );
+        fprintf( stderr, "/!\\ \t Laison non sï¿½re, probablement une attaque 'passeur de seau' !!!\n" );
         exit(1);
     }
 }
@@ -548,7 +550,7 @@ int send_packet_8 (struct client_t * client, struct server_t * server)
 
 // Etape 8
 //
-// Récéption : Kc(SHA(pass,n,m,config)), Kc(config)
+// Rï¿½cï¿½ption : Kc(SHA(pass,n,m,config)), Kc(config)
 //
 int rcv_packet_8 ( struct client_t * client, struct server_t * server, char * buffer, int sz )
 {
@@ -579,12 +581,11 @@ int rcv_packet_8 ( struct client_t * client, struct server_t * server, char * bu
     }
 
     if( memcmp( tmp_buffer, crypt_buf, SHA_SIZE ) != 0 ) {
-        printf( "/!\\ Serveur non autorisé ou authentification incorrecte, opération annulée. \n" );
+        printf( "/!\\ Serveur non autorisï¿½ ou authentification incorrecte, opï¿½ration annulï¿½e. \n" );
         exit(1);
     }
 
-    printf( "Client configuré.\n" );
+    printf( "Client configurï¿½.\n" );
 
 }
 */
-

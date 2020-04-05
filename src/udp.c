@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include "sdhcp.h"
+#include "svdhcp.h"
 #include "protocol.h"
 
 int open_udp_socket ( struct udp_t * udp )

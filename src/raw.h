@@ -1,12 +1,13 @@
 #ifndef SDHCP_RAW
 #define SDHCP_RAW 1
 
+#define RAW_FRAME_LENGTH 1500
 
 struct raw_t {
 	int sockfd;
     	struct sockaddr_ll saddr;
 	char buffer[RAW_FRAME_LENGTH];
-	struct ethhdr * ethhead;	
+	struct ethhdr * ethhead;
 	struct iphdr * iphead;
 	struct udphdr * udphead;
 	char * data;

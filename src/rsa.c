@@ -6,7 +6,7 @@
 //#include <openssl/bn.h>
 #include <syslog.h>
 
-#include "sdhcp.h"
+#include "svdhcp.h"
 #include "rsa.h"
 #include "common.h"
 

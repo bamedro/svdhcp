@@ -21,35 +21,35 @@
 
 
 #include "packet.h"
-#include "sdhcp.h"
+#include "svdhcp.h"
 
 static int packet_pos;
 
 
 // Packet parser
-	int 
+	int
 packet_get ( struct packet_t * packet, char id, char * data, int sz, padding_e padding)
 {
 	int len, i, j;
 
 	i = PACKET_POS_OPT_START;
-	
+
 	// Loop seeking an option
 	while( packet->data[i] != id ) {
-		
+
 		// end packet Test
 		if( packet->data[i] == 255 )
 		{
 	    		LOG(LOG_ERR,"packet get option - option %d not found", id);
 			return -ERR_PACKET_OPT_NOT_FOUND;
 		}
-		
+
 		// calculate size of option
 		len = packet->data[i+1] + packet->data[i+2]*0x100;
-	
+
 		// next field
 		i += len + 3;
-		
+
 		// over memory test
 		if( (i+2) >= PACKET_MAX_DATA_SIZE )
 		{
@@ -60,15 +60,15 @@ packet_get ( struct packet_t * packet, char id, char * data, int sz, padding_e p
 
 	// calculate size of option
 	len = packet[curr+1]*256 + packet[curr+2];
-	
+
 	// test option size
 	if ( (len != sz) && (sz!=0) )
 	{
 	    	LOG(LOG_ERR,"packet get option - wrong size option", id);
 		return -ERR_PACKET_OPT_WRONG_SIZE;
 	}
-	
-	// copy result witch padding 	
+
+	// copy result witch padding
 	switch (padding)
 	{
 		case ODD :
@@ -95,7 +95,7 @@ packet_get ( struct packet_t * packet, char id, char * data, int sz, padding_e p
 }
 
 // Initialize packet with types
-int 
+int
 packet_init ( struct packet_t * packet, char protocol, char type, unsigned int xid );
 {
 	packet->data[0] = protocol;	// op
@@ -112,13 +112,13 @@ packet_init ( struct packet_t * packet, char protocol, char type, unsigned int x
 
 
 // Add field into packet
-int 
+int
 packet_add ( struct packet_t * packet, char id, char * data, short sz, padding_e padding );
 {
 	int i;
 	int opt_sz = 0;
 	char * opt_data;
-	
+
 	char buffer [PACKET_MAX_OPT_LENGTH/2];
 
 	if ( sz > PACKET_MAX_OPT_LENGTH )
@@ -149,11 +149,11 @@ packet_add ( struct packet_t * packet, char id, char * data, short sz, padding_e
 			}
 			opt_data = buffer;
 			break;
-			
+
 		case NORMAL:
 			opt_sz = sz;
 			opt_data = data;
-			
+
 			break;
 	}
 
@@ -175,7 +175,7 @@ int packet_close( char *packet )
 }
 
 // Read packet header
-	void 
+	void
 packet_sniffer ( struct packet_t * packet )
 {
 	printf( "\nSNIFFER\n=======\n" );
@@ -184,16 +184,16 @@ packet_sniffer ( struct packet_t * packet )
 			buffer[3]*0x100+buffer[2]);
 }
 
-	int 
-packet_protocol ( struct packet_t packet )
+	int
+packet_protocol ( struct packet_t * packet )
 {
 	if( packet->sz >= PACKET_POS_OPT_START )
 		return (packet->data[0]);
 	else
 		return -ERR_WRONG_PACKET;
 }
-	int 
-packet_type ( struct packet_t packet )
+	int
+packet_type ( struct packet_t * packet )
 {
 	if( packet->sz >= PACKET_POS_OPT_START )
 		return (packet->data[1]);
@@ -201,8 +201,8 @@ packet_type ( struct packet_t packet )
 		return -ERR_WRONG_PACKET;
 }
 
-	int 
-packet_xid ( struct packet_t packet )
+	int
+packet_xid ( struct packet_t * packet )
 {
 	if( packet->sz >= PACKET_POS_OPT_START)
 		return (packet->data[2]+packet->data[3]*0x100);

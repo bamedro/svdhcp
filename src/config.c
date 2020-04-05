@@ -5,7 +5,7 @@
 #include <linux/if_ether.h> /* The L2 protocols */
 #include <openssl/rsa.h>
 #include <syslog.h>
-#include "sdhcp.h"
+#include "svdhcp.h"
 #include "protocol.h"
 #include "rsa.h"
 #include "common.h" 

@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "sdhcp.h"
+#include "svdhcp.h"
 #include "rsa.h"
 #include "protocol.h"
 #include "raw.h"
@@ -26,75 +26,77 @@
 #include "common.h"
 #include "signalpipe.h"
 #include "timeout.h"
-#include "config.h" 
+#include "config.h"
+#include <unistd.h>
+
 // Function executed when receive data
-int reply_to_server ( struct client_t * client);
+//int reply_to_client ( struct server_t * server);
+int reply_to_client ( struct server_t * server, struct packet_t * packet);
 // Timeout checking function
 
 
-	int 
+	int
 main( int argc, char **argv )
 {
 	fd_set rfds;
 	struct timeval tv;
 	int retval;
-	
+
 	int maxsock;
 	int res;
 
-	struct client_t client;
+	struct server_t server;
 	struct packet_t packet;
-	
 
 	srandom( time(NULL) );
 
-	// --- First lines printed 
-	printf( "svDHCP - Secure authentification client - %s\n",VERSION );
-	printf( "Visit http://www.svdhcp.org\n");
+	// --- First lines printed
+	printf( "sDHCPd - Secure authentification IP server - %s\n",VERSION );
+	printf( "Visit http://sdhcpd.ipxwarzone.com\n");
 
-	// --- Sigterm setup 
-	client.sig_sockfd = sig_setup();
+	// --- Sigterm setup
+	server.sig_sockfd = sig_setup();
 
 	// --- Loading config file
-	res = config_load_client(&client);
+	res = config_load_server(&server);
 	if( res < 0 ) return(EXIT_FAILURE);
 
 	// --- Init sockets
-	res = init_raw_socket(&client.raw_tx,"eth0",10,20);
+	res = init_raw_socket(&server.raw_tx,"eth0",10,20);
 	if( res < 0 ) return(EXIT_FAILURE);
 	//if( server.raw.iphead->saddr == inet_addr("255.255.255.255")) return (EXIT_FAILURE);
-	res = init_udp_socket(&client.udp_rx);
+	res = init_udp_socket(&server.udp_rx);
 	if( res < 0 ) return(EXIT_FAILURE);
-	
+
 	// --- Initialize client list
-	client.list_server = NULL;
+	server.list_client = NULL;
 
 
-	// --- Reception Loop 
-	LOG(LOG_INFO,"waiting servers ...",RSAKEY_SIZE);
+	// --- Reception Loop
+	LOG(LOG_INFO,"waiting clients ...",RSAKEY_SIZE);
 	while( 1 ) {
 		// Udp Socket lost
-		while(client.udp_rx.sockfd < 0)
+		while(server.udp_rx.sockfd < 0)
 		{
 			LOG(LOG_ERR,"udp socket lost, trying to restore ...");
-			res = init_udp_socket(&client.udp_rx);
-			if(res) bind_udp_socket(&client.udp_rx, PORT_CLIENT);
+			res = init_udp_socket(&server.udp_rx);
+			if(res) bind_udp_socket(&server.udp_rx, PORT_SERVER);
 			sleep(1);
 		}
 
 		// Raw Socket lost
-		while(client.raw_tx.sockfd < 0)
+		while(server.raw_tx.sockfd < 0)
 		{
 			LOG(LOG_ERR,"raw socket lost, trying to restore ...");
-			init_raw_socket(&client.raw_tx,"eth0",10,20);
+			init_raw_socket(&server.raw_tx,"eth0",10,20);
 			sleep(1);
 		}
 
 		// Add sockets to select list
 		FD_ZERO(&rfds);
-		FD_SET(client.udp_rx.sockfd, &rfds);
-		FD_SET(client.sig_sockfd, &rfds);
-		maxsock = ( (client.sig_sockfd > client.udp_rx.sockfd) ? client.sig_sockfd : client.udp_rx.sockfd );
+		FD_SET(server.udp_rx.sockfd, &rfds);
+		FD_SET(server.sig_sockfd, &rfds);
+		maxsock = ( (server.sig_sockfd > server.udp_rx.sockfd) ? server.sig_sockfd : server.udp_rx.sockfd );
 
 		// Timeout Loop
 		tv.tv_sec = 1;
@@ -106,7 +108,7 @@ main( int argc, char **argv )
 		if(retval)
 		{
 			// if sigterm
-			if(FD_ISSET(client.sig_sockfd,&rfds))
+			if(FD_ISSET(server.sig_sockfd,&rfds))
 			{
 				DEBUG(LOG_INFO,"signal received\n");
 				switch(sig_read())
@@ -124,17 +126,17 @@ main( int argc, char **argv )
 				}
 			}
 			// if udp packet
-			if(FD_ISSET(client.udp.sockfd,&rfds))
+			if(FD_ISSET(server.udp_rx.sockfd,&rfds))
 			{
 				//Read udp packet
-				recv_udp_socket (&(client.udp), &packet);
+				recv_udp_socket (&(server.udp_rx),&packet);
 				// Reply to the client
-				reply_to_server(&client, &packet);
+				reply_to_client(&server,&packet);
 			}
 
 		}
 		// Check for timeout
-		timeout_check_server(&client);
+		timeout_check_client(&server);
 	}
 
 
@@ -143,40 +145,40 @@ main( int argc, char **argv )
 
 
 // Function executed when receive data
-int reply_to_server ( struct client_t * client, struct packet_t * packet)
+int reply_to_client ( struct server_t * server, struct packet_t * packet)
 {
-	struct server_t * server;
+	struct client_t * client;
 	int res, type, id;
 
-	DEBUG(LOG_INFO, "New packet received (%d bytes)", packet->sz);
+	DEBUG(LOG_INFO, "New packet received (%d bytes)" ,packet->sz);
 
-	if((type = packet_type(packet->data, packet->sz)) == -1)
+	if((type = packet_type(packet)) == -1)
 		return -ERR_WRONG_PACKET;
 
-	id = packet_id(packet->data,packet->sz);
+	id = packet_id(packet);
 	DEBUG(LOG_INFO," -> type: %d id: %d",type,id );
 	//packet_sniffer(buffer);
 
 	// Case of first packet
-	if(type != PACKET_2)
+	if(type != PACKET_1)
 	{
 		// Looking for client id in list
-		server = client->list_server;
-		while(server->xid != id)
+		client = server->list_client;
+		while(client->xid != id)
 		{
-			printf("xid = %d\n",server->xid);
+			printf("xid = %d\n",client->xid);
 			//End of list
-			if(server->next_server == NULL)
+			if(client->next_client == NULL)
 			{
 				printf("Packet id not found\n");
 				return -ERR_WRONG_PACKET;
 			}
 			//Next client
-			server = server->next_server;
+			client = client->next_client;
 		}
 
 		// Look if it is the expected packet
-		if(type != server->expected_packet)
+		if(type != client->expected_packet)
 		{
 			printf("Wrong Packet\n");
 			return -ERR_WRONG_PACKET;
@@ -186,14 +188,14 @@ int reply_to_server ( struct client_t * client, struct packet_t * packet)
 
 	switch(type)
 	{
-		case PACKET_2 :
+		case PACKET_1 :
 			//Etape 1
 			//Receive :  Kc
 			DEBUG(LOG_INFO,"Step 1 : Get Client RSA Key (Kc)" );
-			server = (struct server_t *) malloc(sizeof(struct server_t));
-			server->next_server = client->list_server;
-			client->list_server = server;
-			if((res = new_server(client, server, packet)) < 0)
+			client = (struct client_t *) malloc(sizeof(struct client_t));
+			client->next_client = server->list_client;
+			server->list_client = client;
+			if((res = new_client(client, server, packet)) < 0)
 				return res;
 		/*
 			//Step 2
@@ -205,7 +207,7 @@ int reply_to_server ( struct client_t * client, struct packet_t * packet)
 			client->expected_packet = PACKET_3;
 */
 			break;
-/*		
+/*
 			   case PACKET_3:
 			//Step 3
 			//Receiving : odd(Ks(m))
@@ -261,7 +263,3 @@ int reply_to_server ( struct client_t * client, struct packet_t * packet)
 
 	return 1;
 }
-
-
-
-

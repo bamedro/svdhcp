@@ -20,7 +20,7 @@
 #ifndef SDHCP_SIGTERM
 #define SDHCP_SIGTERM 1
 
-#include <linux/signal.h>
+#include <signal.h>
 
 static void sig_handler ( int sig );
 int sig_setup ( void );

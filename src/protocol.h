@@ -9,7 +9,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "sdhcp.h"
+#include "svdhcp.h"
 #include "rsa.h"
 #include "raw.h"
 #include "udp.h"
@@ -26,25 +26,25 @@ struct client_t {
     RSA *rsa;
     struct udp_t udp;
     struct raw_t raw;
-    
+
     int expected_packet;
-    
+
     char macaddress[ETH_ALEN];
 
     int sig_sockfd;
 
     struct client_t * next_client;
     struct server_t * list_server;
-    
+
     char login[LOGIN_MAXSIZE];
     char password[LOGIN_MAXSIZE];
     char config[BUFFER_SIZE];
-    
+
     long int timeout;
     int state;
     int xid;
     char packetmacaddress[BUFFER_SIZE];
-    
+
     long int n;
     long int m;
     /*
@@ -61,16 +61,16 @@ struct server_t {
     struct udp_t udp_rx;
     struct udp_t udp_tx;
     struct raw_t raw_tx;
-    
+
     int expected_packet;
- 
+
     char macaddress[ETH_ALEN];
 
     int sig_sockfd;
-    
+
     struct server_t * next_server;
     struct client_t * list_client ;
-    
+
     char pidfile[BUFFER_SIZE];
     int xid;
 };

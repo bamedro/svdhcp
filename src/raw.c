@@ -18,7 +18,7 @@
 #include <openssl/bn.h>
 
 
-#include "sdhcp.h"
+#include "svdhcp.h"
 #include "common.h"
 #include "protocol.h"
 #include "raw.h"

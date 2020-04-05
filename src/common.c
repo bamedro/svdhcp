@@ -30,7 +30,7 @@
 #include <sys/stat.h>
 #include <stdarg.h>
 
-#include "sdhcp.h"
+#include "svdhcp.h"
 #include "common.h"
 
 static int daemonized;

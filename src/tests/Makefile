@@ -15,7 +15,7 @@ LIBS=-lssl
 COMMON=protocol.c raw.c udp.c config.c rsa.c timeout.c   packet.c database.c common.c pidfile.c signalpipe.c 
 SERVER=sdhcpd.c 
 CLIENT=sdhcp.c 
-#ENTETES=sdhcp.h packet.h
+#ENTETES=svdhcp.h packet.h
 
 
 ##########

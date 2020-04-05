@@ -17,6 +17,9 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef __PACKET_H__
+#define __PACKET_H__
+
 #define PACKET_1 1 //C->S Kc
 #define PACKET_2 2 //S->C
 #define PACKET_3 3
@@ -40,10 +43,12 @@
 #define PACKET_POS_OPT_START 6
 enum pkt_option_enum { NORMAL, ODD, EVEN };
 
+typedef enum pkt_option_enum padding_e;
+
 struct packet_t {
 	char data [ MAX_DATA_LENGTH ];
 	int sz;
-}
+};
 
 int packet_init ( struct packet_t * packet, char protocol, char type, unsigned int xid );
 int packet_get ( struct packet_t * packet, char id, char * data, int sz, padding_e padding );
@@ -53,5 +58,7 @@ int packet_close ( struct packet_t * packet );
 void packet_sniffer ( struct packet_t * packet );
 
 int packet_protocol ( struct packet_t packet );
-int packet_type ( struct packet_t packet );
+int packet_type ( struct packet_t * packet );
 int packet_xid ( struct packet_t packet );
+
+#endif

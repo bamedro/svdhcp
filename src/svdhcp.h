@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <syslog.h>
 
-#include "common.h" 
+#include "common.h"
 
 #define VERSION                 "1.0.0"
 #define SDHCP_DEBUG             1
